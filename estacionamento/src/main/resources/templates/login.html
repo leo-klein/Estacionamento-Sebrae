@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 34 34%22><rect width=%2234%22 height=%2234%22 rx=%228%22 fill=%22%232563eb%22/><text x=%2250%25%22 y=%2254%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22Plus Jakarta Sans, sans-serif%22 font-size=%2220%22 font-weight=%22800%22>P</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-dark: #060810;
+            --card-bg: rgba(12, 16, 30, 0.88);
+            --border-color: rgba(148, 163, 184, 0.10);
+            --text-main: #eef2f7;
+            --text-muted: #929bad;
+            --danger: #f87171;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            overflow: hidden;
+            position: relative;
+            background-image:
+                    radial-gradient(ellipse at 12% 8%, rgba(37, 99, 235, 0.12), transparent 42%),
+                    radial-gradient(ellipse at 88% 92%, rgba(16, 185, 129, 0.045), transparent 38%),
+                    linear-gradient(135deg, #070913 0%, #030408 100%);
+            background-attachment: fixed;
+        }
+
+        .bg-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .shape {
+            position: absolute;
+            filter: blur(70px);
+            opacity: 0.06;
+            border-radius: 50%;
+        }
+
+        .shape-1 {
+            width: 350px;
+            height: 350px;
+            background: #3b82f6;
+            top: -100px;
+            left: -100px;
+        }
+
+        .shape-2 {
+            width: 450px;
+            height: 450px;
+            background: #2563eb;
+            bottom: -150px;
+            right: -100px;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 580px;
+            padding: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-card {
+            width: 100%;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            padding: 56px 64px;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 34px;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .brand-text {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-text span {
+            color: #60a5fa;
+        }
+
+        .form-header {
+            margin-bottom: 32px;
+        }
+
+        .form-header h2 {
+            font-size: 1.85rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+        }
+
+        .form-header p {
+            color: var(--text-muted);
+            font-size: 0.98rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            margin-bottom: 22px;
+            position: relative;
+        }
+
+        label {
+            font-size: 0.86rem;
+            font-weight: 600;
+            color: #d1d5db;
+            letter-spacing: 0.02em;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 18px;
+            background-color: rgba(7, 10, 20, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px rgba(7, 10, 20, 0.95) inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+            caret-color: #ffffff;
+        }
+
+        input::placeholder {
+            color: rgba(156, 163, 175, 0.35);
+        }
+
+        input:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        input:focus {
+            border-color: #60a5fa;
+            background-color: rgba(7, 10, 20, 0.7);
+        }
+
+        .password-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-container input {
+            padding-right: 48px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            transition: color 0.2s;
+        }
+
+        .toggle-password:hover {
+            color: #ffffff;
+        }
+
+        .toggle-password svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .error-msg {
+            background-color: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            padding: 14px 18px;
+            border-radius: 12px;
+            color: var(--danger);
+            font-size: 0.92rem;
+            font-weight: 500;
+            margin-bottom: 22px;
+        }
+
+        .btn-submit {
+            margin-top: 8px;
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.02rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-submit:active {
+            transform: scale(0.99);
+        }
+
+        .form-footer-link {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.92rem;
+            color: var(--text-muted);
+        }
+
+        .form-footer-link a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .form-footer-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+</div>
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="brand-header">
+            <div class="brand-icon">P</div>
+            <div class="brand-text">Estacionamento <span>Sebrae</span></div>
+        </div>
+
+        <div class="form-header">
+            <h2>Bem-vindo de volta</h2>
+            <p>Entre com suas credenciais para acessar o painel</p>
+        </div>
+
+        <div th:if="${erro}" class="error-msg" th:text="${erro}"></div>
+
+        <form method="post" action="/autenticar">
+            <div class="input-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" name="email" placeholder="seu.email@exemplo.com" autocomplete="off" required>
+            </div>
+
+            <div class="input-group">
+                <label for="senha">Senha</label>
+                <div class="password-container">
+                    <input type="password" id="senha" name="senha" placeholder="••••••••" autocomplete="new-password" required>
+                    <button type="button" class="toggle-password" onclick="alternarSenha('senha', this)" title="Mostrar senha">
+                        <svg class="eye-icon" viewBox="0 0 24 24">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Entrar</button>
+
+            <div class="form-footer-link">
+                Não tem uma conta? <a href="/cadastro">Cadastre-se</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function alternarSenha(idInput, btn) {
+        const input = document.getElementById(idInput);
+        const svg = btn.querySelector('svg');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.setAttribute('title', 'Ocultar senha');
+            svg.innerHTML = `
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                `;
+        } else {
+            input.type = 'password';
+            btn.setAttribute('title', 'Mostrar senha');
+            svg.innerHTML = `
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                `;
+        }
+    }
+</script>
+</body>
+</html>

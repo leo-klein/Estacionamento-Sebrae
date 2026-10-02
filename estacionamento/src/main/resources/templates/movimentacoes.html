@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movimentações</title>
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 34 34%22><rect width=%2234%22 height=%2234%22 rx=%228%22 fill=%22%232563eb%22/><text x=%2250%25%22 y=%2254%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22 font-size=%2220%22 font-weight=%22800%22>P</text></svg>">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --bg-dark: #060810;
+      --card-bg: rgba(12, 16, 30, 0.88);
+      --border-color: rgba(148, 163, 184, 0.10);
+      --text-main: #eef2f7;
+      --text-muted: #929bad;
+      --success: #34d399;
+      --danger: #f87171;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      min-height: 100vh;
+      color: var(--text-main);
+      position: relative;
+      background-image:
+              radial-gradient(ellipse at 12% 8%, rgba(37, 99, 235, 0.12), transparent 42%),
+              radial-gradient(ellipse at 88% 92%, rgba(16, 185, 129, 0.045), transparent 38%),
+              linear-gradient(135deg, #070913 0%, #030408 100%);
+      background-attachment: fixed;
+      overflow-y: auto;
+    }
+
+    .bg-shapes {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .shape {
+      position: absolute;
+      filter: blur(70px);
+      opacity: 0.06;
+      border-radius: 50%;
+    }
+
+    .shape-1 {
+      width: 350px;
+      height: 350px;
+      background: #3b82f6;
+      top: -100px;
+      left: -100px;
+    }
+
+    .shape-2 {
+      width: 450px;
+      height: 450px;
+      background: #2563eb;
+      bottom: -150px;
+      right: -100px;
+    }
+
+    .app-wrapper {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 48px;
+      background: rgba(9, 12, 24, 0.82);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.16);
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.15rem;
+      box-shadow: 0 5px 18px rgba(37, 99, 235, 0.28);
+    }
+
+    .brand-text {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-text span {
+      color: #60a5fa;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .nav-link {
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: background .22s ease, color .22s ease;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.055);
+    }
+
+    .nav-link.active {
+      background: rgba(96, 165, 250, 0.10);
+      color: #dbeafe;
+      box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.08);
+    }
+
+    .btn-logout {
+      padding: 8px 16px;
+      background: rgba(248, 113, 113, 0.075);
+      border: 1px solid rgba(248, 113, 113, 0.16);
+      color: var(--danger);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .22s ease;
+      margin-left: 10px;
+    }
+
+    .btn-logout:hover {
+      background: rgba(248, 113, 113, 0.14);
+      border-color: rgba(248, 113, 113, 0.28);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 36px auto;
+      padding: 0 24px;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .table-card {
+      background: linear-gradient(145deg, rgba(15, 20, 37, 0.88), rgba(9, 12, 24, 0.84));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(148, 163, 184, 0.11);
+      border-radius: 22px;
+      padding: 34px 36px;
+      box-shadow:
+              0 24px 60px rgba(0, 0, 0, 0.38),
+              inset 0 1px 0 rgba(255, 255, 255, 0.025);
+    }
+
+    .header-action-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .table-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.035em;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-form-inline {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .filter-input-date {
+      background: rgba(7, 10, 21, 0.72);
+      border: 1px solid rgba(148, 163, 184, 0.13);
+      border-radius: 11px;
+      padding: 10px 16px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      outline: none;
+      color-scheme: dark;
+      cursor: pointer;
+      transition: all .22s ease;
+    }
+
+    .filter-input-date:hover,
+    .filter-input-date:focus {
+      border-color: rgba(96, 165, 250, 0.48);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.09);
+    }
+
+    .custom-dropdown {
+      position: relative;
+      user-select: none;
+      width: 150px;
+      flex: 0 0 150px;
+    }
+
+    .dropdown-selected {
+      width: 100%;
+      min-height: 42px;
+      background: rgba(7, 10, 21, 0.72);
+      border: 1px solid rgba(148, 163, 184, 0.13);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 11px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      white-space: nowrap;
+      transition: all .22s ease;
+    }
+
+    .dropdown-selected:hover {
+      border-color: rgba(96, 165, 250, 0.48);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.09);
+    }
+
+    .dropdown-selected::after {
+      content: '▾';
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .dropdown-list {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      width: 150px;
+      background: rgba(11, 15, 29, 0.97);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 12px;
+      box-shadow: 0 18px 38px rgba(0, 0, 0, 0.48);
+      overflow: hidden;
+      display: none;
+      z-index: 99;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .dropdown-list.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      color: var(--text-main);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .15s ease, color .15s ease;
+    }
+
+    .dropdown-item:hover {
+      background: rgba(59, 130, 246, 0.13);
+      color: #bfdbfe;
+    }
+
+    .filter-btn {
+      background: rgba(59, 130, 246, 0.10);
+      border: 1px solid rgba(96, 165, 250, 0.22);
+      color: #93c5fd;
+      padding: 10px 18px;
+      border-radius: 11px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all .22s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.btn-ativo {
+      background: rgba(59, 130, 246, 0.18);
+      border-color: rgba(96, 165, 250, 0.40);
+      color: #bfdbfe;
+      box-shadow: 0 5px 18px rgba(37, 99, 235, 0.10);
+    }
+
+    .table-container {
+      max-height: 600px;
+      overflow: auto;
+      border-radius: 14px;
+      padding: 0 4px 4px;
+      position: relative;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+    }
+
+    .table-container::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    .table-container::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.25);
+      border-radius: 4px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(59, 130, 246, 0.5);
+    }
+
+    .custom-table {
+      width: 100%;
+      min-width: 720px;
+      table-layout: fixed;
+      border-collapse: separate;
+      border-spacing: 0 7px;
+      text-align: center;
+    }
+
+    .custom-table th {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 12px 8px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      background: rgba(10, 14, 27, 0.97);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 10;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+      white-space: nowrap;
+    }
+
+    .custom-table tbody tr {
+      background: rgba(255, 255, 255, 0.022);
+      transition: background .18s ease, box-shadow .18s ease;
+    }
+
+    .custom-table tbody tr:hover {
+      background: rgba(59, 130, 246, 0.075);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+    }
+
+    .custom-table td {
+      font-size: 0.9rem;
+      color: var(--text-main);
+      padding: 16px 8px;
+      text-align: center;
+      vertical-align: middle;
+      border-top: 1px solid rgba(148, 163, 184, 0.075);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.075);
+    }
+
+    .custom-table tbody tr td:first-child {
+      border-left: 1px solid rgba(148, 163, 184, 0.075);
+      border-top-left-radius: 12px;
+      border-bottom-left-radius: 12px;
+    }
+
+    .custom-table tbody tr td:last-child {
+      border-right: 1px solid rgba(148, 163, 184, 0.075);
+      border-top-right-radius: 12px;
+      border-bottom-right-radius: 12px;
+    }
+
+    .custom-table th:nth-child(1),
+    .custom-table td:nth-child(1) { width: 10%; }
+
+    .custom-table th:nth-child(2),
+    .custom-table td:nth-child(2) { width: 22%; }
+
+    .custom-table th:nth-child(3),
+    .custom-table td:nth-child(3) { width: 20%; }
+
+    .custom-table th:nth-child(4),
+    .custom-table td:nth-child(4) { width: 24%; }
+
+    .custom-table th:nth-child(5),
+    .custom-table td:nth-child(5) { width: 24%; }
+
+    .id-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: rgba(148, 163, 184, 0.07);
+      border: 1px solid rgba(148, 163, 184, 0.07);
+      border-radius: 7px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #aab4c5;
+      white-space: nowrap;
+    }
+
+    .vehicle-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .vehicle-placa {
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.045em;
+    }
+
+    .vehicle-modelo {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .time-badge {
+      display: inline-block;
+      font-weight: 600;
+      color: #dbe2ec;
+      background: rgba(148, 163, 184, 0.045);
+      padding: 6px 12px;
+      border-radius: 9px;
+      border: 1px solid rgba(148, 163, 184, 0.09);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 900px) {
+      .navbar {
+        padding: 18px 24px;
+      }
+
+      .table-card {
+        padding: 28px 24px;
+      }
+
+      .header-action-row {
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .navbar {
+        padding: 14px;
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+
+      .brand-text {
+        font-size: 1.05rem;
+      }
+
+      .nav-links {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .nav-link,
+      .btn-logout {
+        padding: 8px 9px;
+        font-size: 0.76rem;
+      }
+
+      .container {
+        margin: 24px auto;
+        padding: 0 14px;
+      }
+
+      .table-card {
+        padding: 22px 14px;
+        border-radius: 17px;
+      }
+
+      .header-action-row {
+        flex-direction: column;
+      }
+
+      .table-title {
+        font-size: 1.15rem;
+      }
+
+      .filter-group {
+        width: 100%;
+      }
+
+      .filter-form-inline {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .filter-input-date {
+        min-width: 0;
+        width: 100%;
+        padding: 10px 9px;
+      }
+
+      .filter-btn {
+        white-space: nowrap;
+        padding: 10px 12px;
+      }
+
+      .custom-dropdown {
+        width: auto;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .dropdown-selected {
+        gap: 10px;
+        padding: 10px 12px;
+      }
+
+      .dropdown-list {
+        width: 100%;
+        min-width: 140px;
+      }
+
+      .custom-table th,
+      .custom-table td {
+        padding: 13px 8px;
+      }
+
+      .custom-table {
+        min-width: 720px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="bg-shapes">
+  <div class="shape shape-1"></div>
+  <div class="shape shape-2"></div>
+</div>
+
+<div class="app-wrapper">
+
+  <header class="navbar">
+    <div class="brand-header">
+      <div class="brand-icon">P</div>
+      <div class="brand-text">Estacionamento <span>Sebrae</span></div>
+    </div>
+
+    <nav class="nav-links">
+      <a th:href="@{/painel}" class="nav-link">Painel</a>
+      <a th:href="@{/movimentacoes}" class="nav-link active">Movimentações</a>
+      <a th:href="@{/relatorios}" class="nav-link">Relatórios</a>
+      <a th:href="@{/}" class="btn-logout">Sair</a>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <div class="table-card">
+
+      <div class="header-action-row">
+        <h1 class="table-title">Histórico de Movimentações</h1>
+
+        <div class="filter-group">
+
+          <div class="custom-dropdown" id="customDropdown">
+            <div class="dropdown-selected" id="dropdownSelected">
+              <span th:if="${filtroAtivo == 'hoje'}">Hoje</span>
+              <span th:if="${filtroAtivo == 'semana'}">Esta Semana</span>
+              <span th:if="${filtroAtivo == 'mes'}">Este Mês</span>
+              <span th:if="${filtroAtivo == 'data'}">Data Específica</span>
+              <span th:if="${filtroAtivo != 'hoje' and filtroAtivo != 'semana' and filtroAtivo != 'mes' and filtroAtivo != 'data'}">Hoje</span>
+            </div>
+
+            <div class="dropdown-list" id="dropdownList">
+              <div class="dropdown-item" onclick="selecionarFiltro('hoje')">
+                Hoje
+              </div>
+              <div class="dropdown-item" onclick="selecionarFiltro('semana')">
+                Esta Semana
+              </div>
+              <div class="dropdown-item" onclick="selecionarFiltro('mes')">
+                Este Mês
+              </div>
+            </div>
+          </div>
+
+          <form method="get"
+                th:action="@{/movimentacoes}"
+                class="filter-form-inline">
+
+            <input type="date"
+                   name="data"
+                   class="filter-input-date"
+                   th:value="${dataSelecionada}">
+
+            <button type="submit"
+                    class="filter-btn"
+                    th:classappend="${filtroAtivo == 'data'} ? ' btn-ativo' : ''">
+              Filtrar Data
+            </button>
+          </form>
+
+        </div>
+      </div>
+
+      <div class="table-container">
+
+        <table class="custom-table">
+
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Veículo</th>
+            <th>Data</th>
+            <th>Horário de Entrada</th>
+            <th>Horário de Saída</th>
+          </tr>
+          </thead>
+
+          <tbody>
+
+          <tr th:if="${#lists.isEmpty(movimentacoes)}">
+            <td colspan="5"
+                style="color: var(--text-muted); padding: 40px; background: transparent; border: none;">
+              Nenhuma movimentação registrada para este período.
+            </td>
+          </tr>
+
+          <tr th:each="m : ${movimentacoes}">
+
+            <td>
+              <span class="id-badge"
+                    th:text="'#' + ${m.id}">
+                #1
+              </span>
+            </td>
+
+            <td>
+              <div class="vehicle-cell">
+                <span class="vehicle-placa"
+                      th:text="${m.placa}">
+                  ABC-1234
+                </span>
+
+                <span class="vehicle-modelo"
+                      th:text="${m.modelo}">
+                  Modelo
+                </span>
+              </div>
+            </td>
+
+            <td>
+              <span class="time-badge"
+                    th:if="${m.dataEntrada != null}"
+                    th:text="${#temporals.format(m.dataEntrada, 'dd/MM')}">
+                01/10
+              </span>
+            </td>
+
+            <td>
+              <span class="time-badge"
+                    th:if="${m.dataEntrada != null}"
+                    th:text="${#temporals.format(m.dataEntrada, 'HH:mm')}">
+                08:30
+              </span>
+            </td>
+
+            <td>
+              <span class="time-badge"
+                    th:if="${m.dataSaida != null}"
+                    th:text="${#temporals.format(m.dataSaida, 'HH:mm')}">
+                12:00
+              </span>
+
+              <span th:if="${m.dataSaida == null}"
+                    style="color: var(--text-muted); font-size: 0.85rem;">
+                Em andamento
+              </span>
+            </td>
+
+          </tr>
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  const dropdownSelected = document.getElementById('dropdownSelected');
+  const dropdownList = document.getElementById('dropdownList');
+
+  dropdownSelected.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownList.classList.toggle('show');
+  });
+
+  window.addEventListener('click', () => {
+    dropdownList.classList.remove('show');
+  });
+
+  function selecionarFiltro(periodo) {
+    window.location.href = '/movimentacoes?periodo=' + periodo;
+  }
+</script>
+
+</body>
+</html>

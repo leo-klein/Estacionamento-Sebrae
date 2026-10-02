@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatórios</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 34 34%22><rect width=%2234%22 height=%2234%22 rx=%228%22 fill=%22%232563eb%22/><text x=%2250%25%22 y=%2254%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22Plus Jakarta Sans, sans-serif%22 font-size=%2220%22 font-weight=%22800%22>P</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --bg-dark: #070913;
+      --card-bg: rgba(13, 17, 32, 0.85);
+      --border-color: rgba(255, 255, 255, 0.07);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --success: #34d399;
+      --danger: #f87171;
+      --warning: #f59e0b;
+      --info: #60a5fa;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      min-height: 100vh;
+      color: var(--text-main);
+      position: relative;
+      background-image:
+              radial-gradient(circle at 15% 20%, rgba(37, 99, 235, 0.1) 0%, transparent 50%),
+              linear-gradient(135deg, #070913 0%, #030408 100%);
+      background-attachment: fixed;
+      overflow-y: auto;
+    }
+
+    .bg-shapes {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .shape {
+      position: absolute;
+      filter: blur(70px);
+      opacity: 0.06;
+      border-radius: 50%;
+    }
+
+    .shape-1 {
+      width: 350px;
+      height: 350px;
+      background: #3b82f6;
+      top: -100px;
+      left: -100px;
+    }
+
+    .shape-2 {
+      width: 450px;
+      height: 450px;
+      background: #2563eb;
+      bottom: -150px;
+      right: -100px;
+    }
+
+    .app-wrapper {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 48px;
+      background: rgba(13, 17, 32, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 1.15rem;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .brand-text {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-text span {
+      color: #60a5fa;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .nav-link {
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-logout {
+      padding: 8px 16px;
+      background: rgba(248, 113, 113, 0.1);
+      border: 1px solid rgba(248, 113, 113, 0.2);
+      color: var(--danger);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      margin-left: 10px;
+    }
+
+    .btn-logout:hover {
+      background: rgba(248, 113, 113, 0.2);
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 36px auto;
+      padding: 0 24px;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .reports-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .reports-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .stat-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .content-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 36px 40px;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
+      margin-bottom: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .card-header-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .custom-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .dropdown-btn:hover {
+      background: rgba(37, 99, 235, 0.15);
+      border-color: rgba(59, 130, 246, 0.3);
+      color: #60a5fa;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      background: #0d1120;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      min-width: 220px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    .dropdown-content.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-decoration: none;
+      display: block;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .dropdown-item:hover, .dropdown-item.active {
+      background: rgba(37, 99, 235, 0.2);
+      color: #60a5fa;
+    }
+
+    .filter-options {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-filter {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-filter:hover, .btn-filter.active {
+      background: rgba(37, 99, 235, 0.15);
+      border-color: rgba(59, 130, 246, 0.3);
+      color: #60a5fa;
+    }
+
+    .table-container {
+      width: 100%;
+      max-height: 380px;
+      overflow-y: auto;
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .table-container::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .table-container::-webkit-scrollbar-track {
+      background: rgba(13, 17, 32, 0.5);
+    }
+    .table-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .custom-table th {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(13, 17, 32, 0.95);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .custom-table td {
+      font-size: 0.92rem;
+      color: var(--text-main);
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .custom-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .badge-freq {
+      background: rgba(52, 211, 153, 0.15);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      color: #34d399;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    body {
+      background-color: #060810;
+      background-image:
+              radial-gradient(ellipse at 12% 8%, rgba(37, 99, 235, 0.12), transparent 42%),
+              radial-gradient(ellipse at 88% 92%, rgba(16, 185, 129, 0.045), transparent 38%),
+              linear-gradient(135deg, #070913 0%, #030408 100%);
+      background-attachment: fixed;
+    }
+
+    .navbar {
+      background: rgba(9, 12, 24, 0.82);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.09);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    .brand-icon {
+      box-shadow: 0 5px 18px rgba(37, 99, 235, 0.28);
+    }
+
+    .nav-link {
+      transition: background .22s ease, color .22s ease, box-shadow .22s ease;
+    }
+
+    .nav-link.active {
+      background: rgba(96, 165, 250, 0.10);
+      color: #dbeafe;
+      box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.08);
+    }
+
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.055);
+      color: #fff;
+    }
+
+    .btn-logout {
+      background: rgba(248, 113, 113, 0.075);
+      border-color: rgba(248, 113, 113, 0.16);
+      transition: background .22s ease, border-color .22s ease, transform .22s ease;
+    }
+
+    .btn-logout:hover {
+      background: rgba(248, 113, 113, 0.14);
+      border-color: rgba(248, 113, 113, 0.28);
+      transform: translateY(-1px);
+    }
+
+    .container {
+      max-width: 1080px;
+      margin-top: 38px;
+      margin-bottom: 42px;
+    }
+
+    .stat-card, .content-card {
+      background: linear-gradient(145deg, rgba(15, 20, 37, 0.90), rgba(9, 12, 24, 0.86));
+      border: 1px solid rgba(148, 163, 184, 0.11);
+      box-shadow: 0 22px 55px rgba(0, 0, 0, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      transition: border-color .22s ease, box-shadow .22s ease, transform .22s ease;
+    }
+
+    .stat-card {
+      border-radius: 18px;
+      padding: 22px 24px;
+    }
+
+    .stat-card:hover {
+      border-color: rgba(96, 165, 250, 0.18);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.40),
+      inset 0 1px 0 rgba(255, 255, 255, 0.035);
+      transform: translateY(-2px);
+    }
+
+    .stat-title {
+      color: #929bad;
+      letter-spacing: .065em;
+      font-size: .74rem;
+    }
+
+    .stat-value {
+      letter-spacing: -.045em;
+      font-size: 1.7rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .content-card {
+      border-radius: 22px;
+      padding: 32px 34px;
+      margin-bottom: 22px;
+    }
+
+    .card-header-title {
+      font-size: 1.28rem;
+      letter-spacing: -.035em;
+    }
+
+    .dropdown-btn, .btn-filter {
+      background: rgba(7, 10, 21, 0.72);
+      border-color: rgba(148, 163, 184, 0.13);
+      border-radius: 11px;
+      transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+    }
+
+    .dropdown-btn:hover, .btn-filter:hover, .btn-filter.active {
+      background: rgba(59, 130, 246, 0.13);
+      border-color: rgba(96, 165, 250, 0.35);
+      color: #bfdbfe;
+      box-shadow: 0 5px 18px rgba(37, 99, 235, 0.08);
+    }
+
+    .dropdown-content {
+      background: rgba(11, 15, 29, 0.97);
+      border-color: rgba(148, 163, 184, 0.14);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 18px 38px rgba(0, 0, 0, 0.48);
+    }
+
+    .dropdown-item:hover, .dropdown-item.active {
+      background: rgba(59, 130, 246, 0.13);
+      color: #bfdbfe;
+    }
+
+    .table-container {
+      border: 1px solid rgba(148, 163, 184, 0.10);
+      border-radius: 14px;
+      background: rgba(5, 8, 17, 0.26);
+      scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+    }
+
+    .custom-table th {
+      color: #929bad;
+      background: rgba(10, 14, 27, 0.97);
+      font-size: .72rem;
+      letter-spacing: .07em;
+      border-bottom-color: rgba(148, 163, 184, 0.09);
+    }
+
+    .custom-table td {
+      border-bottom-color: rgba(148, 163, 184, 0.065);
+    }
+
+    .custom-table tbody tr {
+      transition: background .18s ease;
+    }
+
+    .custom-table tbody tr:hover {
+      background: rgba(59, 130, 246, 0.065);
+    }
+
+    .badge-freq {
+      background: rgba(16, 185, 129, 0.10);
+      border: 1px solid rgba(52, 211, 153, 0.20);
+      color: #6ee7b7;
+      padding: 5px 11px;
+      border-radius: 9px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 768px) {
+      .navbar { padding: 16px 20px; gap: 14px; flex-wrap: wrap; }
+      .nav-links { gap: 4px; flex-wrap: wrap; }
+      .nav-link, .btn-logout { padding: 8px 10px; font-size: .82rem; }
+      .container { margin-top: 24px; padding: 0 16px; }
+      .content-card { padding: 24px 20px; }
+      .reports-grid { gap: 12px; }
+    }
+
+    @media (max-width: 520px) {
+      .brand-text { font-size: 1.05rem; }
+      .navbar { padding: 14px 14px; }
+      .nav-links { width: 100%; justify-content: space-between; }
+      .nav-link, .btn-logout { padding: 8px 9px; font-size: .76rem; }
+      .content-card { padding: 20px 13px; border-radius: 17px; }
+      .section-header { align-items: flex-start; }
+      .filter-group { width: 100%; justify-content: space-between; }
+      .filter-options { gap: 6px; }
+      .btn-filter { padding: 8px 10px; font-size: .78rem; }
+      .dropdown-btn { padding: 8px 11px; font-size: .78rem; }
+      .stat-card { padding: 18px; }
+      .custom-table th, .custom-table td { padding: 13px 12px; white-space: nowrap; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="bg-shapes">
+  <div class="shape shape-1"></div>
+  <div class="shape shape-2"></div>
+</div>
+
+<div class="app-wrapper">
+  <header class="navbar">
+    <div class="brand-header">
+      <div class="brand-icon">P</div>
+      <div class="brand-text">Estacionamento <span>Sebrae</span></div>
+    </div>
+    <nav class="nav-links">
+      <a th:href="@{/painel}" class="nav-link">Painel</a>
+      <a th:href="@{/movimentacoes}" class="nav-link">Movimentações</a>
+      <a th:href="@{/relatorios}" class="nav-link active">Relatórios</a>
+      <a th:href="@{/}" class="btn-logout">Sair</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="reports-grid">
+      <div class="stat-card">
+        <div class="stat-title">Total de Visitas</div>
+        <div class="stat-value" th:text="${totalPeriodo ?: '0'}">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Tempo Médio</div>
+        <div class="stat-value" id="cardTempoMedio" th:text="${tempoMedio ?: '0h 0m'}">0h 0m</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Média Diária</div>
+        <div class="stat-value" th:text="${mediaDiaria ?: '0'}">0</div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <div class="section-header">
+        <h2 class="card-header-title">Fluxo de Veículos</h2>
+        <div class="filter-group">
+          <div class="custom-dropdown">
+            <button type="button" class="dropdown-btn" onclick="toggleDropdown()">
+              <span id="dropdownLabel"
+                    th:text="${tipoDadoAtual == 'tempo' ? 'Tempo Médio (Horas)' : 'Veículos Registrados'}">
+                Veículos Registrados
+              </span>
+              <span style="font-size: 0.65rem; color: var(--text-muted);">▼</span>
+            </button>
+            <div id="dropdownMenu" class="dropdown-content">
+              <a class="dropdown-item" th:classappend="${tipoDadoAtual != 'tempo'} ? 'active'" onclick="mudarTipoDado('veiculos')">Veículos Registrados</a>
+              <a class="dropdown-item" th:classappend="${tipoDadoAtual == 'tempo'} ? 'active'" onclick="mudarTipoDado('tempo')">Tempo Médio (Horas)</a>
+            </div>
+          </div>
+
+          <div class="filter-options">
+            <a th:href="@{/relatorios(periodo='semanal', tipoDado=${tipoDadoAtual})}" th:class="${periodoAtual == 'semanal' ? 'btn-filter active' : 'btn-filter'}">Semanal</a>
+            <a th:href="@{/relatorios(periodo='mensal', tipoDado=${tipoDadoAtual})}" th:class="${periodoAtual == 'mensal' ? 'btn-filter active' : 'btn-filter'}">Mensal</a>
+          </div>
+        </div>
+      </div>
+
+      <div style="position: relative; height: 300px; width: 100%;">
+        <canvas id="fluxoChart"></canvas>
+      </div>
+    </div>
+
+    <div class="content-card" style="margin-bottom: 0;">
+      <div class="section-header">
+        <h2 class="card-header-title">Veículos Mais Frequentes</h2>
+      </div>
+
+      <div class="table-container">
+        <table class="custom-table">
+          <thead>
+          <tr>
+            <th>Veículo</th>
+            <th style="text-align: center;">Tempo Médio</th>
+            <th style="text-align: center;">Tempo Total</th>
+            <th style="text-align: center;">Total de Visitas</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:if="${#lists.isEmpty(veiculosFrequentes)}">
+            <td colspan="4" style="color: var(--text-muted); padding: 30px; text-align: center;">Sem dados suficientes.</td>
+          </tr>
+          <tr th:each="v : ${veiculosFrequentes}">
+            <td>
+              <strong th:text="${v[0]}"></strong><br>
+              <span th:text="${v[1]}" style="font-size: 0.82rem; color: var(--text-muted);"></span>
+            </td>
+            <td style="text-align: center; color: var(--text-muted); font-weight: 500;" th:text="${v[3]}"></td>
+            <td style="text-align: center; color: var(--text-muted); font-weight: 500;" th:text="${v[4]}"></td>
+            <td style="text-align: center;">
+              <span class="badge-freq" th:text="${v[2] + ' visitas'}"></span>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script th:inline="javascript">
+  function toggleDropdown() {
+    document.getElementById("dropdownMenu").classList.toggle("show");
+  }
+
+  window.onclick = function(event) {
+    if (!event.target.closest('.custom-dropdown')) {
+      var dropdowns = document.getElementsByClassName("dropdown-content");
+      for (var i = 0; i < dropdowns.length; i++) {
+        var openDropdown = dropdowns[i];
+        if (openDropdown.classList.contains('show')) {
+          openDropdown.classList.remove('show');
+        }
+      }
+    }
+  }
+
+  function mudarTipoDado(novoTipo) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('tipoDado', novoTipo);
+
+    if (!urlParams.has('periodo')) {
+      urlParams.set('periodo', /*[[${periodoAtual}]]*/ 'semanal');
+    }
+
+    window.location.search = urlParams.toString();
+  }
+
+  function formatarHorasMinutos(horasDecimal) {
+    let totalMinutos = Math.round(horasDecimal * 60);
+    let h = Math.floor(totalMinutos / 60);
+    let m = totalMinutos % 60;
+    return h + "h " + m + "m";
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    let cardTempo = document.getElementById("cardTempoMedio");
+    if (cardTempo) {
+      let texto = cardTempo.innerText.trim();
+      if (texto.includes("h") && !texto.includes("m")) {
+        let numStr = texto.replace("h", "").replace(",", ".");
+        let val = parseFloat(numStr);
+        if (!isNaN(val)) {
+          cardTempo.innerText = formatarHorasMinutos(val);
+        }
+      }
+    }
+  });
+
+  const labels = /*[[${labelsGrafico}]]*/ [];
+  const dataValues = /*[[${valoresGrafico}]]*/ [];
+  const tipoDadoAtual = /*[[${tipoDadoAtual}]]*/ 'veiculos';
+
+  let labelGraficoTexto = (tipoDadoAtual === 'tempo') ? 'Tempo Médio' : 'Veículos Registrados';
+
+  const ctx = document.getElementById('fluxoChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: labelGraficoTexto,
+        data: dataValues,
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.15,
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: (tipoDadoAtual === 'tempo') ? 'Valores em Horas' : '',
+          color: '#9ca3af',
+          font: { family: 'Plus Jakarta Sans', size: 11, weight: '500' },
+          align: 'start',
+          padding: { bottom: 10 }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              let value = context.parsed.y || 0;
+              if (tipoDadoAtual === 'tempo') {
+                return ` Tempo Médio: ${formatarHorasMinutos(value)}`;
+              }
+              return ` Veículos Registrados: ${value}`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: '#9ca3af',
+            font: { family: 'Plus Jakarta Sans' },
+            callback: function(value) {
+              return value;
+            }
+          },
+          grid: {
+            color: 'rgba(255, 255, 255, 0.08)',
+            drawBorder: false
+          }
+        },
+        x: {
+          ticks: {
+            color: '#9ca3af',
+            font: { family: 'Plus Jakarta Sans', weight: '600' }
+          },
+          grid: {
+            display: true,
+            color: 'rgba(255, 255, 255, 0.04)',
+            drawBorder: false
+          }
+        }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
